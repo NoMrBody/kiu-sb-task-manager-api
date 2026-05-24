@@ -9,6 +9,8 @@ import org.example.todoapi.exception.ApiRequestException;
 import org.example.todoapi.repository.TaskRepository;
 import org.example.todoapi.repository.UserRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -40,10 +42,15 @@ public class TaskServiceImpl implements TaskService{
 
     @Override
     public List<TaskGetDto> getAllTasks() {
-        List<Task> tasks = taskRepository.findAll();
-        return tasks.stream()
-                .map(this::mapToDto)
-                .toList();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return taskRepository.findAll().stream().map(this::mapToDto).toList();
+        } else {
+            return taskRepository.findByUserUsername(username).stream().map(this::mapToDto).toList();
+        }
     }
 
     @Override
