@@ -3,10 +3,12 @@ package org.example.todoapi.service;
 import org.example.todoapi.dto.UserCreateDto;
 import org.example.todoapi.dto.UserGetDto;
 import org.example.todoapi.dto.UserUpdateDto;
+import org.example.todoapi.entity.Role;
 import org.example.todoapi.entity.User;
 import org.example.todoapi.exception.ApiRequestException;
 import org.example.todoapi.repository.UserRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public List<UserGetDto> getAllUsers() {
@@ -28,7 +31,9 @@ public class UserServiceImpl implements UserService {
     public UserGetDto createUser(UserCreateDto userCreateDto) {
         User user = new User();
         user.setUsername(userCreateDto.getUsername());
+        user.setPassword(passwordEncoder.encode(userCreateDto.getPassword()));
         user.setEmail(userCreateDto.getEmail());
+        user.setRole(Role.USER);
         return mapToDto(userRepository.save(user));
     }
 
@@ -63,8 +68,9 @@ public class UserServiceImpl implements UserService {
         return ugdto;
     }
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
 }
