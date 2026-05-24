@@ -10,6 +10,9 @@ A Spring Boot-based RESTful API for managing tasks and users. This project provi
 - **Task Statuses**: Track task progress (e.g., TODO, IN_PROGRESS, DONE).
 - **API Documentation**: Interactive API documentation using Swagger/OpenAPI.
 - **Global Exception Handling**: Centralized error management for consistent API responses.
+- **Authentication**: Form-based login with session management
+- **Authorization**: Role-based access control (USER and ADMIN)
+- **Password Security**: BCrypt password hashing
 
 ## Tech Stack
 
@@ -20,6 +23,7 @@ A Spring Boot-based RESTful API for managing tasks and users. This project provi
 - **Lombok** (Boilerplate reduction)
 - **SpringDoc OpenAPI** (Swagger UI)
 - **Maven** (Build tool)
+- **Spring Security** (Authentication & Authorization)
 
 ## Prerequisites
 
@@ -69,6 +73,23 @@ The server will start at `http://localhost:8080`.
 - `POST /api/tasks` - Create a new task
 - `PUT /api/tasks/{id}` - Update task details
 - `DELETE /api/tasks/{id}` - Delete a task
+
+## Security
+
+Authentication is handled via form-based login with server-side sessions.
+
+- **Login**: `POST /login` (username + password)
+- **Logout**: `POST /logout` (invalidates session)
+- **Session timeout**: 30 minutes of inactivity
+
+### Roles
+| Role  | Access |
+|-------|--------|
+| USER  | Own tasks only |
+| ADMIN | All tasks, all users |
+
+
+> Note: CSRF is disabled — this is a REST API with no browser forms.
 
 ## API Documentation
 
