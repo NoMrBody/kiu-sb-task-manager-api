@@ -7,6 +7,7 @@ import org.example.todoapi.dto.UserGetDto;
 import org.example.todoapi.dto.UserUpdateDto;
 import org.example.todoapi.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "Get all users")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UserGetDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
@@ -42,6 +44,7 @@ public class UserController {
     }
 
     @Operation(summary = "Delete specific user")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUserById(@PathVariable Long id){
         userService.deleteUser(id);
