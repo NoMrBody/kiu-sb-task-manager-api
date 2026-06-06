@@ -88,6 +88,8 @@ Authentication is handled via form-based login with server-side sessions.
 | USER  | Own tasks only |
 | ADMIN | All tasks, all users |
 
+> All users register with the USER role by default.
+> ADMIN role must be assigned manually via the database
 
 > Note: CSRF is disabled — this is a REST API with no browser forms.
 
