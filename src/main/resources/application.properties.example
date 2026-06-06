@@ -4,8 +4,8 @@ spring.datasource.url=
 spring.datasource.username=
 spring.datasource.password=
 spring.datasource.driver-class-name=
-spring.jpa.show-sql=true
-spring.jpa.hibernate.ddl-auto=update
+#spring.jpa.show-sql=true
+#spring.jpa.hibernate.ddl-auto=update
 
 # making jackson case INSENSITIVE
 spring.jackson.deserialization.fail-on-unknown-properties=false
