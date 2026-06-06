@@ -35,3 +35,4 @@ build/
 
 ### Spring Config ###
 src/main/resources/application.properties
+/logs/app.log
