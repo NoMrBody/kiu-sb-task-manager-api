@@ -64,8 +64,8 @@ The default active profile is `dev` (set via `spring.profiles.active=dev` in `ap
 
 | Profile | Database                            | Schema                                | Seed data            | Logging config           |
 | ------- | ----------------------------------- | ------------------------------------- | -------------------- | ------------------------ |
-| `dev`   | H2 in-memory (`jdbc:h2:mem:taskdb`) | `create-drop` (rebuilt on every boot) | `data.sql` is loaded | `log4j2-dev.xml` (INFO)  |
-| `prod`  | PostgreSQL                          | `validate` (never auto-mutated)       | none                 | `log4j2-prod.xml` (WARN) |
+| `dev`   | H2 in-memory (`jdbc:h2:mem:taskdb`) | `create-drop` (rebuilt on every boot) | `data.sql` is loaded | `log4j2-dev.xml` (DEBUG) |
+| `prod`  | PostgreSQL (`week7-lab`)            | `validate` (never auto-mutated)       | none                 | `log4j2-prod.xml` (WARN) |
 
 
 In the `dev` profile the H2 web console is available at `http://localhost:8080/h2-console` (JDBC URL `jdbc:h2:mem:taskdb`, user `sa`, empty password).
