@@ -6,16 +6,26 @@
             <PatternLayout pattern="%d{HH:mm:ss} [%t] %highlight{%-5level}{FATAL=red blink, ERROR=red, WARN=yellow, INFO=green, DEBUG=cyan, TRACE=white} %logger{36} - %msg%n"/>
         </Console>
 
-        <!-- append="false" clears the file on every startup -->
-        <File name="File" fileName="logs/app.log" append="false">
-            <PatternLayout pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
-        </File>
+        <!-- Rolling File (aligned with prod appender for consistency) -->
+        <RollingFile name="RollingFile"
+                     fileName="logs/app.log"
+                     filePattern="logs/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
+            <Policies>
+                <!-- Roll over every day -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- Roll over when file hits 10MB -->
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!-- Keep at most 30 rolled files -->
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
-        <Root level="DEBUG">
+        <Root level="INFO">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="File"/>
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>
