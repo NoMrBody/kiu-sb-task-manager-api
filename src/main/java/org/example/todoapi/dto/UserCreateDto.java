@@ -9,15 +9,15 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class UserCreateDto {
-    @NotNull
-    @Size(min = 3, max = 40)
+    @NotNull(message = "{validation.username.notNull}")
+    @Size(min = 3, max = 40, message = "{validation.username.size}")
     private String username;
 
-    @NotNull
-    @Email
+    @NotNull(message = "{validation.email.notNull}")
+    @Email(message = "{validation.email.invalid}")
     private String email;
 
-    @NotNull
+    @NotNull(message = "{validation.password.notNull}")
     private String password;
 
 }

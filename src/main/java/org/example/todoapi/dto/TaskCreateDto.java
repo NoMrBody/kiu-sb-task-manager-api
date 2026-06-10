@@ -12,16 +12,16 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 public class TaskCreateDto {
-    @NotNull
-    @Size(min = 1, max = 100)
+    @NotNull(message = "{validation.task.title.notNull}")
+    @Size(min = 1, max = 100, message = "{validation.task.title.size}")
     private String title;
 
     private String description;
 
-    @NotNull
+    @NotNull(message = "{validation.task.status.notNull}")
     private TaskStatus status;
 
-    @FutureOrPresent
+    @FutureOrPresent(message = "{validation.task.dueDate.futureOrPresent}")
     private LocalDate dueDate;
 
     @NotNull
