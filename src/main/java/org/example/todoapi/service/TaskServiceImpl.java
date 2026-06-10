@@ -1,5 +1,6 @@
 package org.example.todoapi.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.todoapi.dto.TaskCreateDto;
 import org.example.todoapi.dto.TaskGetDto;
 import org.example.todoapi.dto.TaskUpdateDto;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class TaskServiceImpl implements TaskService{
 
@@ -30,14 +32,19 @@ public class TaskServiceImpl implements TaskService{
     @Override
     public TaskGetDto createTask(TaskCreateDto dto) {
         User u = userRepository.findById(dto.getUserId())
-                .orElseThrow(()-> new ApiRequestException("User not found with id: "+dto.getUserId(), HttpStatus.NOT_FOUND));
+                .orElseThrow(()-> {
+                    log.warn("Cannot create task: user {} not found", dto.getUserId());
+                    return new ApiRequestException("error.user.notFound", HttpStatus.NOT_FOUND, dto.getUserId());
+                });
         Task task = new Task();
         task.setUser(u);
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setTaskStatus(dto.getStatus());
         task.setDueDate(dto.getDueDate());
-        return mapToDto(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        log.info("Created task {} for user {}", saved.getId(), u.getUsername());
+        return mapToDto(saved);
     }
 
     @Override
@@ -46,6 +53,7 @@ public class TaskServiceImpl implements TaskService{
         String username = auth.getName();
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        log.debug("Fetching tasks for user {} (admin={})", username, isAdmin);
         if (isAdmin) {
             return taskRepository.findAll().stream().map(this::mapToDto).toList();
         } else {
@@ -55,27 +63,40 @@ public class TaskServiceImpl implements TaskService{
 
     @Override
     public TaskGetDto getTaskById(Long id) {
+        log.debug("Fetching task {}", id);
         Task t = taskRepository.findById(id)
-                .orElseThrow(()-> new ApiRequestException("Task not found with id: "+id, HttpStatus.NOT_FOUND));
+                .orElseThrow(()-> {
+                    log.warn("Task {} not found", id);
+                    return new ApiRequestException("error.task.notFound", HttpStatus.NOT_FOUND, id);
+                });
         return mapToDto(t);
     }
 
     @Override
     public void deleteTask(Long id) {
         taskRepository.findById(id)
-                .orElseThrow(()-> new ApiRequestException("Task not found with id: "+id, HttpStatus.NOT_FOUND));
+                .orElseThrow(()-> {
+                    log.warn("Cannot delete task: task {} not found", id);
+                    return new ApiRequestException("error.task.notFound", HttpStatus.NOT_FOUND, id);
+                });
         taskRepository.deleteById(id);
+        log.info("Deleted task {}", id);
     }
 
     @Override
     public TaskGetDto updateTask(Long id, TaskUpdateDto dto) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(()-> new ApiRequestException("Task not found with id: "+id, HttpStatus.NOT_FOUND));
+                .orElseThrow(()-> {
+                    log.warn("Cannot update task: task {} not found", id);
+                    return new ApiRequestException("error.task.notFound", HttpStatus.NOT_FOUND, id);
+                });
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setTaskStatus(dto.getStatus());
         task.setDueDate(dto.getDueDate());
-        return mapToDto(taskRepository.save(task));
+        Task saved = taskRepository.save(task);
+        log.info("Updated task {}", id);
+        return mapToDto(saved);
     }
 
     private TaskGetDto mapToDto(Task t){
