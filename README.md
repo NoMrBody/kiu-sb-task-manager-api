@@ -17,6 +17,10 @@ A Spring Boot-based RESTful API for managing tasks and users. This project provi
 - **Externalized Configuration**: Validated `app.settings.`* properties exposed via a metadata endpoint
 - **Internationalization (i18n)**: Localized error/validation messages (English and Spanish)
 - **Structured Logging**: Profile-driven Log4j2 logging to console and a rolling file
+- **Automated Testing**: Unit, controller (`@WebMvcTest`), and integration tests with Mockito and MockMvc
+- **Application Monitoring**: Spring Boot Actuator endpoints for health, info, and metrics
+
+
 
 ## Tech Stack
 
@@ -29,7 +33,11 @@ A Spring Boot-based RESTful API for managing tasks and users. This project provi
 - **Maven** (Build tool)
 - **Spring Security** (Authentication & Authorization)
 - **Bean Validation** (Hibernate Validator, wired to the message bundles)
-- **Log4j2** (Logging)
+- **Log4j2** (Logging via SLF4J)
+- **Spring Boot Actuator** (Health, info, and metrics endpoints)
+- **JUnit 5 & Mockito** (Automated testing)
+
+
 
 ## Prerequisites
 
@@ -37,13 +45,19 @@ A Spring Boot-based RESTful API for managing tasks and users. This project provi
 - Maven 3.x
 - PostgreSQL database (only required for the `prod` profile; the `dev` profile uses an in-memory H2 database)
 
+
+
 ## Getting Started
+
+
 
 ### 1. Build the Project
 
 ```bash
 ./mvnw clean install
 ```
+
+
 
 ### 2. Run the Application
 
@@ -99,9 +113,28 @@ spring.datasource.password=your_password
 spring.datasource.driver-class-name=org.postgresql.Driver
 ```
 
-### Seed data (dev profile)
 
-The `dev` profile loads `src/main/resources/data.sql`, which creates three users (`admin`, `alice`, `bob`) and a handful of sample tasks. All seed users share the password `password` (stored as a BCrypt hash).
+
+### Seed data and user credentials (dev profile)
+
+The `dev` profile loads `src/main/resources/data.sql`, which creates three users and a handful of sample tasks. All seed users share the password `password` (stored as a BCrypt hash).
+
+
+| Username | Password   | Role  | Email                                         |
+| -------- | ---------- | ----- | --------------------------------------------- |
+| `admin`  | `password` | ADMIN | [admin@example.com](mailto:admin@example.com) |
+| `alice`  | `password` | USER  | [alice@example.com](mailto:alice@example.com) |
+| `bob`    | `password` | USER  | [bob@example.com](mailto:bob@example.com)     |
+
+
+Log in with form-based authentication before calling protected endpoints:
+
+```bash
+curl -c cookies.txt -X POST http://localhost:8080/login \
+  -d "username=admin&password=password"
+```
+
+
 
 ## Custom Properties
 
@@ -131,6 +164,8 @@ curl http://localhost:8080/api/info
 }
 ```
 
+
+
 ## Internationalization (i18n)
 
 Error and validation messages are localized via message bundles in `src/main/resources`:
@@ -143,6 +178,8 @@ Locale is resolved from the `Accept-Language` request header (`AcceptHeaderLocal
 
 - API error payloads (e.g. user/task not found, duplicate user, registration disabled) raised through the global exception handler.
 - Bean Validation messages on the request DTOs (e.g. username size, invalid email), which are wired to the same bundles.
+
+
 
 ### Testing localization
 
@@ -165,14 +202,77 @@ Logging is configured with Log4j2 and is profile-driven (the active config is se
 - `dev` → `log4j2-dev.xml` at `INFO` level.
 - `prod` → `log4j2-prod.xml` at `WARN` level.
 
-Both profiles write to the console and to a rolling file at `**logs/app.log**` (relative to the working directory). The rolling policy rolls the file daily and whenever it reaches 10MB, keeping at most 30 archived files (compressed as `logs/app-<date>-<index>.log.gz`).
+Both profiles write to the console and to a rolling file at `logs/app.log` (relative to the working directory). The rolling policy rolls the file daily and whenever it reaches 10MB, keeping at most 30 archived files (compressed as `logs/app-<date>-<index>.log.gz`).
+
+## Testing
+
+The test suite lives under `src/test/java/org/example/todoapi/` and covers positive and negative scenarios.
+
+
+| Test class                         | What it covers                                                |
+| -----------------------------      | ------------------------------------------------------------- |
+| `TaskServiceImplTest`              | Task service success and not-found paths                      |
+| `UserServiceImplTest`              | User CRUD, registration flag, not-found paths                 |
+| `TaskControllerTest`               | Task REST endpoints via MockMvc                               |
+| `UserControllerTest`               | User REST endpoints, admin-only access, registration disabled |
+| `TaskManagerIntegrationTest`       | End-to-end task create and read against H2                    |
+| `ActuatorIntegrationTest`          | Actuator health, info, and metrics access rules               |
+| `TaskManagerApplicationTests`      | Application context smoke test                                |
+
+
+Run all tests:
+
+```bash
+./mvnw test
+```
+
+Run a single test class:
+
+```bash
+./mvnw test -Dtest=UserControllerTest
+```
+
+Tests use the `dev` profile where a full Spring context is required (in-memory H2 with seed data).
+
+## Monitoring
+
+Spring Boot Actuator is enabled with the following endpoints exposed:
+
+
+| Endpoint                       | Auth   | Description                                             |
+| ------------------------------ | ------ | ------------------------------------------------------- |
+| `GET /actuator/health`         | Public | Application and database health                         |
+| `GET /actuator/info`           | ADMIN  | Build and application metadata from `info.*` properties |
+| `GET /actuator/metrics`        | ADMIN  | Available Micrometer metrics                            |
+| `GET /actuator/metrics/{name}` | ADMIN  | A specific metric (e.g. `jvm.memory.used`)              |
+
+
+Examples (with the app running on port 8080):
+
+```bash
+# Public health check
+curl http://localhost:8080/actuator/health
+
+# Authenticate as admin, then query protected actuator endpoints
+curl -c cookies.txt -X POST http://localhost:8080/login \
+  -d "username=admin&password=password"
+
+curl -b cookies.txt http://localhost:8080/actuator/info
+curl -b cookies.txt http://localhost:8080/actuator/metrics
+```
+
+Actuator metadata is contributed by `ApplicationInfoContributor` (using `app.settings.*`) and mirrored in `application.properties` under the `info.*` prefix. Application business metadata remains available separately at `GET /api/info`.
 
 ## API Endpoints
+
+
 
 ### Metadata
 
 - `GET /` - Greeting message
 - `GET /api/info` - API metadata sourced from `app.settings.*` configuration
+
+
 
 ### Users
 
@@ -182,6 +282,8 @@ Both profiles write to the console and to a rolling file at `**logs/app.log**` (
 - `PUT /api/users/{id}` - Update user details
 - `DELETE /api/users/{id}` - Delete a user
 
+
+
 ### Tasks
 
 - `GET /api/tasks` - Get all tasks
@@ -190,6 +292,8 @@ Both profiles write to the console and to a rolling file at `**logs/app.log**` (
 - `PUT /api/tasks/{id}` - Update task details
 - `DELETE /api/tasks/{id}` - Delete a task
 
+
+
 ## Security
 
 Authentication is handled via form-based login with server-side sessions.
@@ -197,6 +301,8 @@ Authentication is handled via form-based login with server-side sessions.
 - **Login**: `POST /login` (username + password)
 - **Logout**: `POST /logout` (invalidates session)
 - **Session timeout**: 30 minutes of inactivity
+
+
 
 ### Roles
 
@@ -211,6 +317,8 @@ Authentication is handled via form-based login with server-side sessions.
 > ADMIN role must be assigned manually via the database
 
 > Note: CSRF is disabled — this is a REST API with no browser forms.
+
+
 
 ## API Documentation
 
@@ -228,5 +336,6 @@ The OpenAPI specification is available at:
 - `src/main/java/org/example/todoapi/entity`: JPA entities
 - `src/main/java/org/example/todoapi/dto`: Data Transfer Objects
 - `src/main/java/org/example/todoapi/exception`: Custom exceptions and global handler
-- `src/main/java/org/example/todoapi/config`: Configuration classes (e.g., OpenAPI)
+- `src/main/java/org/example/todoapi/config`: Configuration classes (e.g., OpenAPI, Security)
+- `src/test/java/org/example/todoapi`: Automated unit, controller, and integration tests
 
